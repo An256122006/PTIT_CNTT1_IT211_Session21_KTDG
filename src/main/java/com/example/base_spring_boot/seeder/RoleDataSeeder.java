@@ -17,7 +17,6 @@ public class RoleDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String @NonNull ... args) throws Exception {
-        // Kiểm tra xem database đã có dữ liệu Role chưa để tránh insert trùng lặp
         if (roleRepository.count() == 0) {
 
             Role adminRole = new Role();
@@ -25,8 +24,6 @@ public class RoleDataSeeder implements CommandLineRunner {
 
             Role userRole = new Role();
             userRole.setRoleName(RoleName.ROLE_USER);
-
-            // Lưu tất cả các role vào database
             roleRepository.saveAll(Arrays.asList(adminRole, userRole));
 
             System.out.println("Đã seed dữ liệu Role thành công!");

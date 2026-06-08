@@ -17,10 +17,6 @@ public class AuthController
 {
     private final IAuthService authService;
 
-    /**
-     * @param req LoginReq
-     * @apiNote handle login with { username , password }
-     */
     @PostMapping("/login")
     public ResponseEntity<?> handleLogin(@Valid @RequestBody LoginReq req)
     {
@@ -33,10 +29,6 @@ public class AuthController
         );
     }
 
-    /**
-     * @param req RegisterReq
-     * @apiNote handle register with { fullName , username , password }
-     */
     @PostMapping("/register")
     public ResponseEntity<?> handleRegister(@Valid @RequestBody RegisterReq req)
     {
