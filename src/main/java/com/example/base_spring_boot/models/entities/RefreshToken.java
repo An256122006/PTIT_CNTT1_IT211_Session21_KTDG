@@ -17,7 +17,8 @@ public class RefreshToken {
     private Long id;
     private String token;
     private Date expiryDate;
+    private boolean revoked;
     @ManyToOne(fetch = FetchType.LAZY)
-    @Column(name = "user_id")
+    @JoinColumn(name = "user_id")
     private User user;
 }

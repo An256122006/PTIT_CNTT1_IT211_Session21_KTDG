@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -26,10 +27,21 @@ public class RefreshTokenService {
         return refreshToken;
     }
     public boolean verifyExpiration(RefreshToken refreshToken) {
-        if (refreshToken.getExpiryDate().before(new Date(new Date().getTime()))) {
+        if (refreshToken.getExpiryDate().before(new Date())) {
             refreshTokenRepository.delete(refreshToken);
             return false;
         }
         return true;
+    }
+
+    public Optional<RefreshToken> findByToken(String token) {
+        return refreshTokenRepository.findByToken(token);
+    }
+
+    public void revokeToken(String token) {
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
+                .orElseThrow(() -> new HttpNotFoundException("Refresh token not found"));
+        refreshToken.setRevoked(true);
+        refreshTokenRepository.save(refreshToken);
     }
 }

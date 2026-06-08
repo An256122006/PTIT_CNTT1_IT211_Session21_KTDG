@@ -14,4 +14,5 @@ public interface IAuthService
 
     JwtRes refreshToken(TokenRefreshRequest tokenRefreshRequest);
 
+    void logout(String refreshToken);
 }

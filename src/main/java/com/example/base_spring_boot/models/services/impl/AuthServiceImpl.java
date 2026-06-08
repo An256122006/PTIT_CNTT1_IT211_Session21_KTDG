@@ -7,6 +7,7 @@ import com.example.base_spring_boot.models.dtos.req.LoginReq;
 import com.example.base_spring_boot.models.dtos.req.RegisterReq;
 import com.example.base_spring_boot.models.dtos.req.TokenRefreshRequest;
 import com.example.base_spring_boot.models.dtos.res.JwtRes;
+import com.example.base_spring_boot.models.entities.RefreshToken;
 import com.example.base_spring_boot.models.entities.Role;
 import com.example.base_spring_boot.models.entities.User;
 import com.example.base_spring_boot.models.repositories.IUserRepository;
@@ -71,22 +72,43 @@ public class AuthServiceImpl implements IAuthService
         MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
 
         assert userDetails != null;
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
+        
         return JwtRes.builder()
                 .accessToken(jwtUtils.generateToken(userDetails.getUsername()))
-                .refreshToken(jwtUtils.generateToken(userDetails.getUsername()))
+                .refreshToken(refreshToken.getToken())
                 .roles(userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()))
                 .build();
     }
 
     @Override
-    public JwtRes refreshToken(TokenRefreshRequest refreshToken) {
-        String username=jwtUtils.extractUsername(refreshToken.getRefreshToken());
-        UserDetails userDetails=myUserDetailsService.loadUserByUsername(username);
-        if (!jwtUtils.validateToken(refreshToken.getRefreshToken(),userDetails)){
-            throw new HttpBadRequestException("Invalid refresh token");
+    public JwtRes refreshToken(TokenRefreshRequest request) {
+        RefreshToken token = refreshTokenService.findByToken(request.getRefreshToken())
+                .orElseThrow(() -> new HttpBadRequestException("Refresh token not found"));
+        
+        if (token.isRevoked()) {
+            throw new HttpBadRequestException("Refresh token has been revoked");
         }
-        String refresh= jwtUtils.generateToken();
-        return JwtRes.builder().build();
+        
+        if (!refreshTokenService.verifyExpiration(token)) {
+            throw new HttpBadRequestException("Refresh token is expired");
+        }
+        
+        User user = token.getUser();
+        UserDetails userDetails = myUserDetailsService.loadUserByUsername(user.getUsername());
+        
+        String newAccessToken = jwtUtils.generateToken(userDetails.getUsername());
+        
+        return JwtRes.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(token.getToken())
+                .roles(userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()))
+                .build();
+    }
+
+    @Override
+    public void logout(String refreshToken) {
+        refreshTokenService.revokeToken(refreshToken);
     }
 
 

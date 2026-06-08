@@ -61,4 +61,9 @@ public class MyUserDetails implements UserDetails
     {
         return true;
     }
+
+    public Long getId()
+    {
+        return this.user.getId();
+    }
 }
